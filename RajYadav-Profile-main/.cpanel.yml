@@ -1,0 +1,4 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/maasitam/test.maasitamedicalfoundation.org
+    - /bin/cp -R client/dist/* $DEPLOYPATH

@@ -1,0 +1,59 @@
+name: Build and Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main  # Change this if your main branch is named differently (e.g., 'master')
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: |
+          npm install
+          cd client && npm install
+          cd ../server && npm install
+
+      - name: 🏗️ Build Client and Server
+        env:
+          VITE_API_URL: https://test.maasitamedicalfoundation.org/api/v1
+        run: |
+          # Build client
+          cd client && npm run build
+          cd ../
+          # Build server
+          cd server && npm run build
+          # Add the .htaccess to client/dist (using your existing script logic)
+          node scripts/cpanel-config.mjs
+
+      - name: 📂 Prepare Deployment Folder
+        run: |
+          mkdir deploy
+          # Copy frontend files
+          cp -r client/dist/* deploy/
+          # Copy backend files (excluding node_modules as they should be installed on server)
+          mkdir -p deploy/backend
+          cp -r server/dist deploy/backend/
+          cp server/package.json deploy/backend/
+          cp server/app.js deploy/backend/
+
+      - name: 🚀 Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./deploy/
+          server-dir: /test.maasitamedicalfoundation.org/
+          dry-run: false
