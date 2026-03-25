@@ -48,6 +48,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     res.status(500).json({ message: 'Server Error', error: err.message });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+export default app;
